@@ -1,74 +1,73 @@
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { SiteHeader } from "@/components/SiteHeader";
+import { Marquee } from "@/components/Marquee";
+import { AddToCart } from "@/components/AddToCart";
 
-// La página se refresca sola cada 60 segundos con los datos de la base.
-export const revalidate = 60;
-
-type Product = {
-  id: number;
-  name: string;
-  brand: string | null;
-  size_ml: number;
-  abv: number | null;
-  sale_price: number | null;
+type P = {
+  id: number; name: string; brand: string | null; size_ml: number;
+  sale_price: number | null; compare_at_price: number | null;
   categories: { name: string } | null;
 };
-
 const colones = (n: number) => "₡" + n.toLocaleString("es-CR");
 
-export default async function Home() {
-  const { data, error } = await supabase
-    .from("products")
-    .select("id, name, brand, size_ml, abv, sale_price, categories(name)")
-    .eq("active", true)
-    .order("name");
+function Card({ p }: { p: P }) {
+  const offer = p.sale_price && p.compare_at_price && p.compare_at_price > p.sale_price;
+  return (
+    <li className="flex flex-col border border-rule bg-surface p-5">
+      <p className="text-[10px] uppercase tracking-[0.18em] text-ink-faint">{p.categories?.name}</p>
+      <h3 className="mt-1 font-serif text-xl">{p.name}</h3>
+      <p className="font-mono text-xs text-ink-muted">{p.size_ml} ml</p>
+      <div className="mt-auto flex items-end justify-between pt-5">
+        <div>
+          {offer && <p className="font-mono text-xs text-ink-faint line-through">{colones(p.compare_at_price!)}</p>}
+          <p className={`font-mono text-lg ${offer ? "text-alarm" : ""}`}>{p.sale_price ? colones(p.sale_price) : "Consultar"}</p>
+        </div>
+        {p.sale_price ? <AddToCart id={p.id} name={p.name} price={p.sale_price} /> : null}
+      </div>
+    </li>
+  );
+}
 
-  const products = (data ?? []) as unknown as Product[];
+export default async function Home() {
+  const { data } = await supabase
+    .from("products")
+    .select("id, name, brand, size_ml, sale_price, compare_at_price, is_featured, categories(name)")
+    .eq("active", true).order("name");
+  const all = (data ?? []) as unknown as (P & { is_featured: boolean })[];
+  const offers = all.filter((p) => p.sale_price && p.compare_at_price && p.compare_at_price > p.sale_price);
+  const featured = all.filter((p) => p.is_featured).slice(0, 8);
 
   return (
-    <main className="min-h-screen bg-neutral-950 text-neutral-100">
-      <header className="border-b border-neutral-800 px-6 py-8 text-center">
-        <h1 className="text-4xl font-bold tracking-wide text-amber-400">
-          La 14 Lounge
-        </h1>
-        <p className="mt-2 text-neutral-400">
-          Licores con entrega en el Gran Área Metropolitana
-        </p>
-        <p className="mt-1 text-xs text-neutral-500">
-          Venta exclusiva a mayores de 18 años
-        </p>
-      </header>
+    <>
+      <SiteHeader />
+      <main>
+        <h1 className="sr-only">La 14 Lounge: licores con entrega en el GAM</h1>
+        <Marquee text="Selección curada" />
+        <Marquee text="Entrega en el GAM" reverse />
+        <Marquee text="Pedí por WhatsApp" />
 
-      <section className="mx-auto max-w-5xl px-6 py-10">
-        {error && (
-          <p className="text-red-400">
-            No pudimos cargar el catálogo. Intenta de nuevo en un momento.
+        {offers.length > 0 && (
+          <section className="mx-auto max-w-5xl px-6 py-14">
+            <p className="text-center text-[10px] uppercase tracking-[0.18em] text-ink-faint">Por tiempo limitado</p>
+            <h2 className="mb-8 text-center font-serif text-4xl">Ofertas</h2>
+            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{offers.map((p) => <Card key={p.id} p={p} />)}</ul>
+          </section>
+        )}
+
+        <section className="mx-auto max-w-5xl px-6 py-14">
+          <p className="text-center text-[10px] uppercase tracking-[0.18em] text-ink-faint">Favoritos</p>
+          <h2 className="mb-8 text-center font-serif text-4xl">Destacados</h2>
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{featured.map((p) => <Card key={p.id} p={p} />)}</ul>
+          <p className="mt-10 text-center">
+            <Link href="/catalogo" className="text-sm underline-offset-4 hover:underline">Ver el catálogo completo →</Link>
           </p>
-        )}
-
-        {!error && products.length === 0 && (
-          <p className="text-neutral-400">Pronto tendremos productos aquí.</p>
-        )}
-
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((p) => (
-            <article
-              key={p.id}
-              className="rounded-xl border border-neutral-800 bg-neutral-900 p-5"
-            >
-              <p className="text-xs uppercase tracking-wider text-amber-500">
-                {p.categories?.name}
-              </p>
-              <h2 className="mt-1 text-lg font-semibold">{p.name}</h2>
-              <p className="text-sm text-neutral-400">
-                {p.size_ml} ml{p.abv ? ` · ${p.abv}% alc.` : ""}
-              </p>
-              <p className="mt-4 text-xl font-bold">
-                {p.sale_price ? colones(p.sale_price) : "Consultar"}
-              </p>
-            </article>
-          ))}
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
+      <footer className="border-t border-rule px-6 py-10 text-center text-xs text-ink-faint">
+        <p className="font-serif text-lg text-ink">La 14 Lounge</p>
+        <p className="mt-2">Venta exclusiva a mayores de 18 años. Disfruta con moderación.</p>
+      </footer>
+    </>
   );
 }

@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "../login/actions";
+
+export const metadata: Metadata = {
+  title: "Panel",
+  robots: { index: false, follow: false },
+};
 
 export default async function AdminLayout({
   children,
@@ -19,18 +25,21 @@ export default async function AdminLayout({
   if (!isAdmin) redirect("/login?error=1");
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100">
-      <header className="flex items-center justify-between border-b border-neutral-800 px-6 py-4">
-        <span className="text-lg font-bold text-amber-400">
-          La 14 Lounge · Panel
-        </span>
+    <div className="mx-auto max-w-5xl px-6 pb-16 pt-10">
+      <header className="flex items-center justify-between">
+        <div className="flex items-baseline gap-4">
+          <span className="font-serif text-3xl">La 14 Lounge</span>
+          <span className="font-mono text-xs uppercase tracking-[0.2em] text-ink-faint">
+            Panel
+          </span>
+        </div>
         <form action={logout}>
-          <button className="rounded border border-neutral-700 px-3 py-1 text-sm hover:bg-neutral-800">
+          <button className="rounded-full border border-ink-muted px-4 py-1.5 font-mono text-xs uppercase tracking-[0.2em] hover:bg-surface">
             Salir
           </button>
         </form>
       </header>
-      <main className="mx-auto max-w-5xl px-6 py-8">{children}</main>
+      <div className="page-rise mt-6">{children}</div>
     </div>
   );
 }

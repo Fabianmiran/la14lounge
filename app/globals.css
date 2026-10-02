@@ -1,26 +1,77 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* La 14 Lounge: sistema de diseño basado en el template "Customer health".
+   Tema editorial oscuro: negro cálido, títulos en serif, números en mono
+   y UN solo color saturado (alarm) para lo que requiere atención. */
 
 @theme inline {
+  --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
+  --font-sans: var(--font-work-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+
   --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-rule: var(--rule);
+  --color-alarm: var(--alarm);
+  --color-cta: var(--cta);
+  --color-cta-foreground: var(--cta-foreground);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  color-scheme: dark;
+  --background: oklch(0.16 0.012 62);
+  --surface: oklch(0.19 0.013 62);
+  --ink: oklch(0.95 0.012 85);
+  --ink-muted: oklch(0.78 0.012 80);
+  --ink-faint: oklch(0.65 0.012 75);
+  --rule: oklch(0.95 0.012 85 / 10%);
+  --alarm: oklch(0.68 0.185 34);   /* OFERTAS y alertas: el único rojo del sitio */
+  --cta: oklch(0.827 0.045 240);   /* ACCIÓN (comprar/pedir): azul polvo de Groundwork */
+  --cta-foreground: oklch(0.16 0.012 62);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background: var(--background);
+    color: var(--ink);
+    font-family: var(--font-sans);
+  }
+  *,
+  ::before,
+  ::after {
+    border-color: var(--rule);
+  }
+  .font-mono,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Entrada suave de la página */
+  @keyframes page-rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
+  }
+  .page-rise {
+    animation: page-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .page-rise { animation: none; }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Franjas de texto en movimiento (inspiradas en la plantilla del Home) */
+.marquee-track {
+  display: flex; width: max-content; white-space: nowrap;
+  font-family: var(--font-serif); text-transform: uppercase; letter-spacing: 0.04em;
+  font-size: clamp(2.5rem, 6vw, 4.5rem); line-height: 1; padding: 1.1rem 0;
+  animation: marquee 45s linear infinite;
 }
+.marquee-reverse { animation-direction: reverse; animation-duration: 55s; }
+@keyframes marquee { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } }

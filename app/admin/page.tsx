@@ -16,27 +16,25 @@ export default async function AdminHome() {
     contar("orders"),
   ]);
 
-  const tarjetas = [
-    { titulo: "Productos", valor: productos },
-    { titulo: "Proveedores", valor: proveedores },
-    { titulo: "Clientes", valor: clientes },
-    { titulo: "Pedidos", valor: pedidos },
+  const stats = [
+    { label: "Productos", value: productos },
+    { label: "Proveedores", value: proveedores },
+    { label: "Clientes", value: clientes },
+    { label: "Pedidos", value: pedidos },
   ];
 
   return (
-    <>
-      <h1 className="mb-6 text-2xl font-semibold">Resumen</h1>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {tarjetas.map((t) => (
-          <div
-            key={t.titulo}
-            className="rounded-xl border border-neutral-800 bg-neutral-900 p-5"
-          >
-            <p className="text-sm text-neutral-400">{t.titulo}</p>
-            <p className="mt-1 text-3xl font-bold text-amber-400">{t.valor}</p>
+    <section className="grid grid-cols-2 divide-x divide-rule border-y-2 border-ink-muted sm:grid-cols-4">
+      {stats.map((s) => (
+        <div key={s.label} className="px-6 py-5 text-center">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-ink-faint">
+            {s.label}
           </div>
-        ))}
-      </div>
-    </>
+          <div className="mt-2 font-mono text-[44px] leading-none tracking-tight">
+            {s.value}
+          </div>
+        </div>
+      ))}
+    </section>
   );
 }
