@@ -1,3 +1,4 @@
+// [LA14 · BASE · v1] app/admin/page.tsx
 import { createClient } from "@/lib/supabase/server";
 
 async function contar(tabla: string) {
