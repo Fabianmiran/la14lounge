@@ -1,4 +1,4 @@
-// [LA14 · BASE · v1] app/admin/layout.tsx
+// [LA14 · BASE · v3] app/admin/layout.tsx
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -23,6 +23,11 @@ export default async function AdminLayout({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Exige el segundo factor (código del celular) para entrar al panel.
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal?.currentLevel !== "aal2")
+    redirect(aal?.nextLevel === "aal2" ? "/login/verificar" : "/login/activar-2fa");
+
   const { data: isAdmin } = await supabase.rpc("is_admin");
   if (!isAdmin) redirect("/login?error=1");
 
@@ -46,6 +51,7 @@ export default async function AdminLayout({
         <Link href="/admin" className="hover:text-ink">Resumen</Link>
         <Link href="/admin/pedidos" className="hover:text-ink">Pedidos</Link>
         <Link href="/admin/clientes" className="hover:text-ink">Clientes</Link>
+        <Link href="/admin/inventario" className="hover:text-ink">Inventario</Link>
         <Link href="/admin/proveedores" className="hover:text-ink">Proveedores</Link>
         <Link href="/admin/entregas" className="hover:text-ink">Entregas</Link>
         <Link href="/" className="ml-auto hover:text-ink">Ver sitio →</Link>

@@ -1,4 +1,4 @@
-// [LA14 · BASE · v1] lib/admin.ts
+// [LA14 · BASE · v2] lib/admin.ts
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -9,6 +9,8 @@ export async function requireAdmin() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal?.currentLevel !== "aal2") redirect("/login");
   const { data: isAdmin } = await supabase.rpc("is_admin");
   if (!isAdmin) redirect("/login?error=1");
   return supabase;

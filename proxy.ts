@@ -1,3 +1,4 @@
+// [LA14 · SEGURIDAD · v1] proxy.ts
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -42,5 +43,5 @@ export async function proxy(request: NextRequest) {
 
 // Solo actúa en el panel y el login; el catálogo público no se toca.
 export const config = {
-  matcher: ["/admin/:path*", "/login"],
+  matcher: ["/admin/:path*", "/login", "/login/:path*"],
 };

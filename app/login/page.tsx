@@ -1,3 +1,4 @@
+// [LA14 · SEGURIDAD · v1] app/login/page.tsx
 import type { Metadata } from "next";
 import { login } from "./actions";
 
@@ -24,11 +25,15 @@ export default async function LoginPage({
           Acceso privado
         </p>
 
-        {error && (
+        {error === "bloqueado" ? (
+          <p className="text-center font-mono text-xs text-alarm">
+            Demasiados intentos. Espera 15 minutos e intenta de nuevo.
+          </p>
+        ) : error ? (
           <p className="text-center font-mono text-xs text-alarm">
             Correo o contraseña incorrectos.
           </p>
-        )}
+        ) : null}
 
         <input
           name="email"
