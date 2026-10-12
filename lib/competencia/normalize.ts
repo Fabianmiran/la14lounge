@@ -199,28 +199,50 @@ function effectiveFlavors(d: Described): Set<string> {
   return new Set(f);
 }
 
-/** ¿Es el mismo producto y la misma presentación? */
+
+/**
+ * Comprueba si dos productos son suficientemente equivalentes
+ * para realizar una comparación directa de precios.
+ *
+ * En caso de duda, evita agrupar variantes distintas.
+ */
 export function compatible(a: Described, b: Described): boolean {
-  if (a.sizeMl !== b.sizeMl || a.packCount !== b.packCount) return false;
+  // Misma presentación y cantidad de unidades.
+  if (a.sizeMl === null || b.sizeMl === null) return false;
 
-  const bothBrand = a.brand && b.brand;
-  if (bothBrand && a.brand !== b.brand) return false;
-  if ((a.brand && !b.brand) || (!a.brand && b.brand)) return false;
+  if (a.sizeMl !== b.sizeMl) return false;
+  if (a.packCount !== b.packCount) return false;
 
+  // Exigir marca reconocida e idéntica.
+  if (!a.brand || !b.brand) return false;
+  if (a.brand !== b.brand) return false;
+
+  // Comparar los sabores normalizados.
   const fa = effectiveFlavors(a);
   const fb = effectiveFlavors(b);
-  if (fa.size !== fb.size || [...fa].some((x) => !fb.has(x))) return false;
 
-  const ra = a.variant.filter((w) => !FLAVOR.has(w));
-  const rb = b.variant.filter((w) => !FLAVOR.has(w));
-  if (!a.brand && !b.brand && (ra.length === 0 || rb.length === 0)) return false;
-  if (ra.length === 0 || rb.length === 0) return true;
+  if (fa.size !== fb.size) return false;
 
-  const sa = new Set(ra);
-  const sb = new Set(rb);
-  const inter = ra.filter((w) => sb.has(w)).length;
-  if (inter === sa.size || inter === sb.size) return true; // uno contiene al otro
-  return inter / (sa.size + sb.size - inter) >= 0.5;
+  for (const flavor of fa) {
+    if (!fb.has(flavor)) return false;
+  }
+
+  // Comparar las variantes restantes.
+  const ra = new Set(
+    a.variant.filter((w) => !FLAVOR.has(w))
+  );
+
+  const rb = new Set(
+    b.variant.filter((w) => !FLAVOR.has(w))
+  );
+
+  if (ra.size !== rb.size) return false;
+
+  for (const word of ra) {
+    if (!rb.has(word)) return false;
+  }
+
+  return true;
 }
 
 /** Qué palabras debe contener un resultado para responder a la búsqueda. */

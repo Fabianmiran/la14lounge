@@ -6,6 +6,16 @@ type Item = { f: FoundItem; d: Described };
 
 const titleCase = (s: string) => s.replace(/\b[a-z]/g, (c) => c.toUpperCase());
 
+// Identifica alimentos que pueden contener nombres de marcas de bebidas.
+function isFoodProduct(name: string): boolean {
+  const normalized = name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  return /\b(salsa|sauce|bbq|barbecue|aderezo|marinada|marinade|ketchup|mostaza|condimento)\b/.test(normalized);
+}
+
 function keyOf(rep: Described): string {
   const v = rep.variant.join(" ");
   return `${rep.brand ?? "?"}|${v}|${rep.sizeMl ?? "?"}${rep.packCount > 1 ? "x" + rep.packCount : ""}`;
@@ -15,9 +25,12 @@ function keyOf(rep: Described): string {
 export function analyze(query: string, found: FoundItem[]) {
   const q = parseQuery(query);
 
+  const queryIsFood = isFoodProduct(query);
+
   const items: Item[] = found
-    .map((f) => ({ f, d: describe(f.name, f.brand) }))
-    .filter((it) => isRelevant(q.required, it.d));
+      .filter((f) => queryIsFood || !isFoodProduct(f.name))
+      .map((f) => ({ f, d: describe(f.name, f.brand) }))
+      .filter((it) => isRelevant(q.required, it.d));
 
   // Agrupar: el más específico (más palabras) sirve de referencia del grupo.
   const sorted = [...items].sort((a, b) => b.d.variant.length - a.d.variant.length);
