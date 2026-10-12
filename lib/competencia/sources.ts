@@ -29,13 +29,13 @@ export const SOURCES: Source[] = [
   {
     slug: "habla-bebidas",
     name: "Habla Bebidas",
-    baseUrl: null, // ← pon aquí la dirección, por ejemplo "https://www.ejemplo.cr"
+    baseUrl: "https://hablabebidas.interfuerza.shop",
     adapters: [{ kind: "shopify" }, { kind: "woocommerce" }, { kind: "jsonld", searchPath: "/?s={q}&post_type=product" }],
   },
   {
     slug: "mini-super-zeus",
     name: "Mini Súper Zeus",
-    baseUrl: null,
+    baseUrl: "https://www.minisuperzeus.com",
     adapters: [{ kind: "shopify" }, { kind: "woocommerce" }, { kind: "jsonld", searchPath: "/?s={q}&post_type=product" }],
   },
   {
@@ -47,7 +47,7 @@ export const SOURCES: Source[] = [
   {
     slug: "vinum",
     name: "Vinum",
-    baseUrl: null,
+    baseUrl: "https://www.vinumcr.com",
     adapters: [{ kind: "shopify" }, { kind: "woocommerce" }, { kind: "jsonld", searchPath: "/?s={q}&post_type=product" }],
   },
   {

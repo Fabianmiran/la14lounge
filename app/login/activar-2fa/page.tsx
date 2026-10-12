@@ -32,7 +32,7 @@ export default async function Activar({
   }
   const { data: enroll, error: enrollError } = await supabase.auth.mfa.enroll({
     factorType: "totp",
-    friendlyName: `La14-${Date.now()}`,
+    friendlyName: "La14-Authenticator",
   });
   if (enrollError || !enroll) redirect("/login?error=1");
 
