@@ -1,24 +1,32 @@
-name: La 14 · Monitor de competencia
+
+name: La 14 - Validacion Monitor
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 14 * * 1"
+
+permissions:
+  contents: read
 
 jobs:
-  monitor:
+  validar:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Obtener codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Ejecutar monitor
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          REPORT_EMAIL: ${{ secrets.REPORT_EMAIL }}
-          FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
-        run: node scripts/monitor-competencia.mjs
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Validar TypeScript
+        run: npx tsc --noEmit
+
+      - name: Validar ESLint
+        run: npx eslint app/admin/competencia lib/competencia
