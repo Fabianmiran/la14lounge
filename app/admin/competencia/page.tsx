@@ -1,145 +1,146 @@
-// [LA14 · COMPETENCIA · v1] app/admin/competencia/page.tsx
+// [LA14 · COMPETENCIA · v2] app/admin/competencia/page.tsx
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { colones } from "@/lib/forms";
-import { searchCompetencia } from "./actions";
-import { searchCompetitors } from "@/lib/competencia/search";
-import type { CompetitorResult } from "@/lib/competencia/types";
+import { createCompetitor } from "./actions";
+import { BuscadorCompetencia } from "./components/BuscadorCompetencia";
 
-const input =
-  "w-full border border-rule bg-background p-2 text-sm outline-none focus:border-ink-muted";
+// La búsqueda consulta varias tiendas a la vez; se da hasta 30 s.
+export const maxDuration = 30;
+
+const TOL = 3; // % de diferencia que se considera "parejo"
+const input = "w-full border border-rule bg-background p-2 text-sm outline-none focus:border-ink-muted";
 const label = "text-[10px] uppercase tracking-[0.18em] text-ink-faint";
+const ERRORS: Record<string, string> = {
+  nombre: "El nombre es obligatorio.",
+  url: "El enlace no es válido. Debe empezar con https://",
+  guardar: "No se pudo guardar. Intenta de nuevo.",
+};
+
+type Comp = { id: number; name: string; channel: string | null; url: string | null };
+type Prod = { id: number; name: string; size_ml: number; sale_price: number | null };
+type LP = { product_id: number; competitor_id: number; price_crc: number; captured_at: string };
+
+const safeUrl = (u: string | null) => (u && /^https?:\/\//i.test(u) ? u : null);
+const daysAgo = (iso: string) => Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000));
 
 export default async function Competencia({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; error?: string }>;
+  searchParams: Promise<{ ok?: string; error?: string }>;
 }) {
-  const { q, error } = await searchParams;
-  const query = q?.trim() ?? "";
-
+  const { ok, error } = await searchParams;
   const supabase = await createClient();
-  const { data: competitors } = await supabase
-    .from("competitors")
-    .select("id, name, channel")
-    .order("id");
 
-  let search: {
-    results: CompetitorResult[];
-    errors: { competitor: string; error: string }[];
-    lowest: CompetitorResult | null;
-  } | null = null;
-  if (query) {
-    try {
-      search = await searchCompetitors(query);
-    } catch {
-      search = { results: [], errors: [{ competitor: "Competencia", error: "No se pudo ejecutar la búsqueda." }], lowest: null };
-    }
-  }
+  const [cRes, pRes, lRes] = await Promise.all([
+    supabase.from("competitors").select("id, name, channel, url").order("name"),
+    supabase.from("products").select("id, name, size_ml, sale_price").eq("active", true).order("name"),
+    supabase.from("v_latest_competitor_price").select("product_id, competitor_id, price_crc, captured_at"),
+  ]);
+  const competitors = (cRes.data ?? []) as Comp[];
+  const products = (pRes.data ?? []) as Prod[];
+  const latest = (lRes.data ?? []) as LP[];
+  const compName = new Map(competitors.map((c) => [c.id, c.name]));
 
-  const results = search?.results ?? [];
+  const rows = products
+    .map((p) => {
+      const prices = latest.filter((l) => l.product_id === p.id);
+      const best = prices.sort((a, b) => a.price_crc - b.price_crc)[0];
+      const diff =
+        best && p.sale_price ? Math.round(((p.sale_price - best.price_crc) / best.price_crc) * 1000) / 10 : null;
+      return { p, best, diff };
+    })
+    .sort((a, b) => (b.diff ?? -999) - (a.diff ?? -999));
 
   return (
     <>
-      <div className="flex items-baseline justify-between gap-4">
-        <h1 className="font-serif text-3xl">Competencia</h1>
-        <div className="flex items-center gap-4"><Link href="/admin/competencia/monitor" className="text-sm text-ink-muted hover:text-ink">Monitor semanal →</Link><span className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-faint">Búsqueda manual</span></div>
-      </div>
+      <h1 className="font-serif text-3xl">Competencia</h1>
 
-      <p className="mt-2 max-w-2xl text-sm text-ink-muted">
-        Consulta precios públicos de los competidores registrados. La búsqueda no realiza compras, inicia sesión ni modifica carritos.
+      <div className="mt-6"><BuscadorCompetencia /></div>
+      {ok && <p className="mt-3 font-mono text-xs text-ink-muted">✓ Competidor guardado.</p>}
+      {error && <p className="mt-3 font-mono text-xs text-alarm">{ERRORS[error] ?? "Ocurrió un error."}</p>}
+
+      <h2 className="mt-10 font-serif text-2xl">Comparador con tus precios</h2>
+      <p className="mt-1 text-xs text-ink-faint">
+        Tu precio contra el más barato que has registrado. Rojo: estás más de {TOL}% por encima.
       </p>
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full min-w-[640px] text-left text-sm">
+          <thead className="text-[10px] uppercase tracking-[0.18em] text-ink-faint">
+            <tr className="border-b border-rule">
+              <th className="py-2 font-normal">Producto</th>
+              <th className="text-right font-normal">Tu precio</th>
+              <th className="text-right font-normal">Más barato</th>
+              <th className="pl-4 font-normal">Dónde</th>
+              <th className="text-right font-normal">Diferencia</th>
+            </tr>
+          </thead>
+          <tbody className="font-mono">
+            {rows.map(({ p, best, diff }) => (
+              <tr key={p.id} className="border-b border-rule">
+                <td className="py-3 font-sans">{p.name} <span className="text-ink-faint">{p.size_ml} ml</span></td>
+                <td className="text-right">{p.sale_price ? colones(p.sale_price) : "—"}</td>
+                <td className="text-right">{best ? colones(best.price_crc) : "—"}</td>
+                <td className="pl-4 font-sans text-xs text-ink-muted">
+                  {best ? compName.get(best.competitor_id) ?? "—" : "—"}
+                  {best && <span className="text-ink-faint"> · hace {daysAgo(best.captured_at)} d{daysAgo(best.captured_at) > 30 ? " (revisar)" : ""}</span>}
+                </td>
+                <td className={`text-right ${diff !== null && diff > TOL ? "text-alarm" : ""}`}>
+                  {diff === null ? "—" : `${diff > 0 ? "+" : ""}${diff}%`}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-2 text-xs text-ink-faint">Un guion (—) significa que falta el dato, no que sea cero.</p>
 
-      {error === "consulta" && <p className="mt-3 font-mono text-xs text-alarm">Escribe un producto para buscar.</p>}
-      {error === "guardar" && <p className="mt-3 font-mono text-xs text-alarm">No se pudo registrar la búsqueda.</p>}
-
-      <form action={searchCompetencia} className="mt-6 flex gap-2 border-y border-rule py-6">
-        <div className="flex-1">
-          <p className={label}>Producto o presentación</p>
-          <input
-            name="query"
-            defaultValue={query}
-            required
-            maxLength={120}
-            placeholder="Ej. Fireball 750ml"
-            className={input}
-          />
+      <h2 className="mt-10 font-serif text-2xl">Competidores</h2>
+      <form action={createCompetitor} className="mt-3 grid gap-4 border-y border-rule py-6 sm:grid-cols-3">
+        <div>
+          <p className={label}>Nombre *</p>
+          <input name="name" required maxLength={80} placeholder="Walmart, PriceSmart…" className={input} />
         </div>
-        <button className="mt-[18px] rounded-full bg-ink px-6 py-2 font-mono text-xs uppercase tracking-[0.2em] text-background hover:opacity-90">
-          Buscar
+        <div>
+          <p className={label}>Tipo</p>
+          <select name="channel" className={input} defaultValue="web">
+            <option value="web">Tienda en línea</option>
+            <option value="fisica">Tienda física</option>
+          </select>
+        </div>
+        <div>
+          <p className={label}>Enlace (opcional)</p>
+          <input name="url" maxLength={300} placeholder="https://" className={input} />
+        </div>
+        <button className="rounded-full bg-ink px-6 py-2 font-mono text-xs uppercase tracking-[0.2em] text-background hover:opacity-90 sm:col-span-3 sm:w-fit">
+          Agregar competidor
         </button>
       </form>
 
-      <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-xs text-ink-faint">
-        {(competitors ?? []).map((c) => <span key={c.id}>{c.name}</span>)}
-      </div>
-
-      {query && (
-        <section className="mt-10">
-          <div className="flex items-baseline justify-between gap-4">
-            <div>
-              <h2 className="font-serif text-2xl">Resultados</h2>
-              <p className="mt-1 text-xs text-ink-faint">Búsqueda: {query}</p>
-            </div>
-            {search?.lowest && (
-              <div className="text-right">
-                <p className={label}>Precio más bajo</p>
-                <p className="font-mono text-xl">{colones(search.lowest.price ?? 0)}</p>
-                <p className="text-xs text-ink-muted">{search.lowest.competitorName}</p>
+      <ul className="mt-4 divide-y divide-rule">
+        {competitors.length === 0 && <li className="py-4 text-ink-muted">Aún no hay competidores. Agrega el primero arriba.</li>}
+        {competitors.map((c) => {
+          const mine = latest.filter((l) => l.competitor_id === c.id);
+          const newest = mine.map((l) => l.captured_at).sort().at(-1);
+          const link = safeUrl(c.url);
+          return (
+            <li key={c.id} className="grid grid-cols-[1fr_auto] items-center gap-4 py-3">
+              <div>
+                <p className="font-serif text-lg">
+                  {c.name} <span className="font-sans text-xs text-ink-faint">{c.channel === "web" ? "en línea" : "física"}</span>
+                </p>
+                <p className="font-mono text-xs text-ink-muted">
+                  {mine.length} productos con precio{newest ? ` · actualizado hace ${daysAgo(newest)} d` : ""}
+                  {link && <> · <a href={link} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline">abrir sitio</a></>}
+                </p>
               </div>
-            )}
-          </div>
-
-          {results.length === 0 ? (
-            <p className="mt-6 border-y border-rule py-6 text-sm text-ink-muted">
-              No se encontraron resultados en las fuentes actualmente disponibles.
-            </p>
-          ) : (
-            <div className="mt-5 overflow-x-auto">
-              <table className="w-full min-w-[760px] text-left text-sm">
-                <thead className="text-[10px] uppercase tracking-[0.18em] text-ink-faint">
-                  <tr className="border-b border-rule">
-                    <th className="py-2 font-normal">Competidor</th>
-                    <th className="font-normal">Producto</th>
-                    <th className="font-normal">Presentación</th>
-                    <th className="text-right font-normal">Precio</th>
-                    <th className="text-right font-normal">Promoción</th>
-                    <th className="text-right font-normal">Estado</th>
-                  </tr>
-                </thead>
-                <tbody className="font-mono">
-                  {results.map((r, index) => (
-                    <tr key={`${r.competitorId}-${r.productName}-${index}`} className="border-b border-rule">
-                      <td className="py-3 font-sans">{r.competitorName}</td>
-                      <td className="font-sans">{r.productName}</td>
-                      <td>{r.presentation ?? "—"}</td>
-                      <td className="text-right">{r.price !== null ? colones(r.price) : "—"}</td>
-                      <td className="text-right">{r.discountPercent ? `-${r.discountPercent}%` : r.promotion ? "Sí" : "—"}</td>
-                      <td className="text-right">{r.available === false ? "Agotado" : "Disponible"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {search?.errors.length ? (
-            <div className="mt-6 border-t border-rule pt-4">
-              <p className={label}>Fuentes con incidencia</p>
-              <ul className="mt-2 space-y-1 text-xs text-ink-muted">
-                {search.errors.map((e) => <li key={e.competitor}>· {e.competitor}: {e.error}</li>)}
-              </ul>
-            </div>
-          ) : null}
-        </section>
-      )}
-
-      <section className="mt-10 bg-surface p-6">
-        <div className="flex items-baseline justify-between gap-4">
-          <div><h2 className="font-serif text-2xl">Monitor semanal</h2><p className="mt-1 text-sm text-ink-muted">Histórico y ejecuciones automáticas de las fuentes registradas.</p></div>
-          <Link href="/admin/competencia/monitor" className="text-sm text-ink-muted hover:text-ink">Abrir monitor →</Link>
-        </div>
-      </section>
+              <Link href={`/admin/competencia/registrar?c=${c.id}`} className="rounded-full border border-ink-muted px-4 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] hover:bg-ink hover:text-background">
+                Actualizar precios
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
     </>
   );
 }
