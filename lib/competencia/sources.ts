@@ -14,7 +14,8 @@ export type Adapter =
   | { kind: "vtex" }
   | { kind: "shopify" }
   | { kind: "woocommerce" }
-  | { kind: "jsonld"; searchPath: string };
+  | { kind: "jsonld"; searchPath: string }
+  | { kind: "megasuper" };
 
 export type Source = {
   slug: string;
@@ -39,10 +40,12 @@ export const SOURCES: Source[] = [
     adapters: [{ kind: "shopify" }, { kind: "woocommerce" }, { kind: "jsonld", searchPath: "/?s={q}&post_type=product" }],
   },
   {
-    slug: "mega-super",
-    name: "Mega Súper",
-    baseUrl: "https://www.megasuper.com", // por verificar
-    adapters: [{ kind: "vtex" }, VTEX_PAGE, { kind: "jsonld", searchPath: "/search?q={q}" }],
+  slug: "mega-super",
+  name: "Mega Súper",
+  baseUrl: "https://www.megasuper.com",
+  adapters: [
+      { kind: "megasuper" }
+    ],
   },
   {
     slug: "vinum",

@@ -2,6 +2,7 @@
 import { decodeEntities, toPrice } from "./normalize";
 import { SOURCES, type Adapter, type Source } from "./sources";
 import type { FoundItem, RawItem, SourceStatus } from "./types";
+import { parseMegaSuperSearch } from "./megasuper";
 
 // Identificación honesta: no nos hacemos pasar por un navegador.
 const UA = "La14LoungeBot/1.0 (consulta manual de precios por el administrador)";
@@ -229,7 +230,15 @@ export function parseJsonLd(html: string, base: URL): RawItem[] {
     const offersRaw = o.offers;
     const offer = obj(Array.isArray(offersRaw) ? offersRaw[0] : offersRaw);
     if (!name || !offer) return;
-    const price = toPrice(offer.price ?? offer.lowPrice);
+    const specification = obj(
+      Array.isArray(offer.priceSpecification)
+        ? offer.priceSpecification[0]
+        : offer.priceSpecification
+);
+
+    const price = toPrice(
+     offer.price ?? specification?.price ?? offer.lowPrice
+);
     const avail = str(offer.availability);
     const brand = typeof o.brand === "string" ? o.brand : str(obj(o.brand)?.name);
     const url = absUrl(str(o.url) ?? str(offer.url), base);
@@ -278,18 +287,33 @@ function buildUrl(base: URL, ad: Adapter, q: string): string {
       return `${base.origin}/wp-json/wc/store/v1/products?search=${e}&per_page=20`;
     case "jsonld":
       return `${base.origin}${ad.searchPath.replace(/\{q\}/g, e)}`;
+      case "megasuper":
+      return `${base.origin}/search?name=${e}`;
   }
 }
 
 function parseWith(ad: Adapter, text: string, base: URL): RawItem[] {
-  if (ad.kind === "jsonld") return parseJsonLd(text, base);
+  if (ad.kind === "jsonld") {
+    return parseJsonLd(text, base);
+  }
+
+  if (ad.kind === "megasuper") {
+    return parseMegaSuperSearch(text, base).items;
+  }
+
   let data: unknown;
+
   try {
     data = JSON.parse(text);
   } catch {
     throw new Error("La respuesta no es JSON");
   }
-  return ad.kind === "vtex" ? parseVtex(data, base) : ad.kind === "shopify" ? parseShopify(data, base) : parseWoo(data, base);
+
+  return ad.kind === "vtex"
+    ? parseVtex(data, base)
+    : ad.kind === "shopify"
+      ? parseShopify(data, base)
+      : parseWoo(data, base);
 }
 
 async function runSource(src: Source, q: string): Promise<{ items: FoundItem[]; status: SourceStatus }> {
