@@ -1,4 +1,4 @@
-// [LA14 · COMPETENCIA · v2] app/admin/competencia/actions.ts
+// [LA14 · COMPETENCIA · v2.1 · PERSISTENCIA v1] app/admin/competencia/actions.ts
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -110,86 +110,59 @@ async function persist(
       duration_ms: durationMs, source_status: statuses })
     .select("id")
     .single();
-  if (searchError || !search) return { saved: false, note: searchError?.message ?? "No se pudo registrar la búsqueda.", searchId: null };
-  const searchId = String(search.id); // UUID existente en Supabase
+  if (searchError || !search) return { saved: false, note: "No se pudo registrar la búsqueda.", searchId: null };
+  const searchId = String(search.id);
   if (!a.rows.length) return { saved: true, note: null, searchId };
 
-  // Vinculamos por nombre (no dependemos de la columna slug que aún no quedó verificada).
-  const { data: stores, error: storesError } = await supabase
-    .from("competitors").select("id, name");
-  if (storesError) return { saved: false, note: storesError.message, searchId };
-  const storeByName = new Map((stores ?? []).map((c) => [norm(String(c.name)), Number(c.id)]));
-
-  const now = new Date().toISOString();
-  let failures = 0;
-  let missingStores = 0;
-  for (const item of a.rows) {
-    const competitorId = storeByName.get(norm(item.sourceName));
-    if (!competitorId || !item.url) { missingStores++; continue; }
-    // La base original carece de UNIQUE(competitor_id, product_url).
-    // Lookup + UPDATE/INSERT evita depender de ON CONFLICT hasta preparar el índice.
-    const { data: current, error: lookupError } = await supabase
-      .from("competitor_products")
-      .select("id, current_price")
-      .eq("competitor_id", competitorId)
-      .eq("product_url", item.url)
-      .limit(1)
-      .maybeSingle();
-    if (lookupError) { failures++; continue; }
-    const currentPrice = item.price;
-    const oldPrice = current?.current_price == null ? null : Number(current.current_price);
-    const payload = {
-      competitor_id: competitorId,
-      product_url: item.url,
-      name: item.name.slice(0, 300),
-      name_raw: item.name.slice(0, 300),
-      brand: item.brand,
-      size_ml: item.sizeMl,
-      pack_count: item.packCount,
-      normalized_key: item.clusterKey,
-      presentation: item.sizeMl == null ? null : `${item.sizeMl} ml`,
-      current_price: currentPrice,
-      previous_price: item.comparePrice ?? oldPrice,
-      compare_price: item.comparePrice,
-      available: item.inStock,
-      promotion: item.promoPct != null && item.promoPct > 0,
-      promo_pct: item.promoPct,
-      promo_text: item.promoText?.slice(0, 200) ?? null,
-      last_checked_at: now,
-      last_seen_at: now,
-      updated_at: now,
-    };
-    let productId: string | null = current ? String(current.id) : null;
-    if (current) {
-      const { error } = await supabase.from("competitor_products").update(payload).eq("id", current.id);
-      if (error) { failures++; continue; }
-    } else {
-      const { data, error } = await supabase.from("competitor_products")
-        .insert(payload).select("id").single();
-      if (error || !data) { failures++; continue; }
-      productId = String(data.id);
-    }
-    if (productId && currentPrice != null) {
-      const { error } = await supabase.from("competitor_price_history").insert({
-        competitor_product_id: productId,
-        search_id: searchId,
-        price: currentPrice,
-        previous_price: oldPrice,
-        compare_price: item.comparePrice,
-        available: item.inStock,
-        promotion: item.promoPct != null && item.promoPct > 0,
-        discount_percent: item.promoPct,
-        promo_pct: item.promoPct,
-        captured_source: "manual_search",
-        checked_at: now,
-      });
-      if (error) failures++;
-    }
+  // Competidores: por slug (estable) y, si aún no existe esa columna, por nombre.
+  type Store = { id: number; name: string; slug?: string | null };
+  let stores: Store[] | null = null;
+  const withSlug = await supabase.from("competitors").select("id, name, slug");
+  if (!withSlug.error) stores = withSlug.data as Store[];
+  else {
+    const byNameOnly = await supabase.from("competitors").select("id, name");
+    if (byNameOnly.error) return { saved: false, note: "No se pudo leer la lista de competidores.", searchId };
+    stores = byNameOnly.data as Store[];
   }
-  const notes = [];
-  if (missingStores) notes.push(`${missingStores} resultados sin competidor asociado.`);
-  if (failures) notes.push(`${failures} errores al guardar productos o precios.`);
-  return { saved: failures === 0 && missingStores === 0, note: notes.join(" ") || null, searchId };
+  const bySlug = new Map(stores.filter((x) => x.slug).map((x) => [x.slug as string, Number(x.id)]));
+  const byName = new Map(stores.map((x) => [norm(String(x.name)), Number(x.id)]));
+
+  let missingStores = 0;
+  const items: Record<string, unknown>[] = [];
+  for (const r of a.rows) {
+    const competitorId = bySlug.get(r.sourceSlug) ?? byName.get(norm(r.sourceName));
+    if (!competitorId || !r.url) { missingStores++; continue; }
+    items.push({
+      competitor_id: competitorId, product_url: r.url, name: r.name.slice(0, 300), brand: r.brand,
+      size_ml: r.sizeMl, pack_count: r.packCount, normalized_key: r.clusterKey,
+      presentation: r.sizeMl == null ? null : `${r.sizeMl} ml`,
+      price: r.price, compare_price: r.comparePrice, available: r.inStock,
+      promo_pct: r.promoPct, promo_text: r.promoText?.slice(0, 200) ?? null,
+    });
+  }
+  if (items.length === 0) return { saved: false, note: `${missingStores} resultados sin competidor asociado.`, searchId };
+
+  // Producto + historial se guardan juntos en la base, en una sola transacción:
+  // o queda todo o no queda nada, y repetir la búsqueda no duplica registros.
+  const { data, error } = await supabase.rpc("record_competitor_observations", {
+    p_search_id: searchId, p_items: items, p_source: "manual_search",
+  });
+  if (error) {
+    const missingFn = error.code === "PGRST202" || error.code === "42883";
+    return {
+      saved: false,
+      searchId,
+      note: missingFn
+        ? "Falta correr LA14_SQL_PERSISTENCIA_v1.sql en Supabase."
+        : `No se pudo guardar el historial (${error.code ?? "error"}).`,
+    };
+  }
+
+  const r = data as { created: number; updated: number; observations: number; skipped: number };
+  const parts = [`${r.created} nuevos`, `${r.updated} con cambios`, `${r.observations} observaciones`];
+  if (r.skipped) parts.push(`${r.skipped} omitidos por datos inválidos`);
+  if (missingStores) parts.push(`${missingStores} sin competidor asociado`);
+  return { saved: true, note: parts.join(" · "), searchId };
 }
 
 export async function buscarCompetencia(_prev: SearchResult | null, formData: FormData): Promise<SearchResult> {

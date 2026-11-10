@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { parseMegaSuperSearch } from "../lib/competencia/megasuper";
 
-const file = process.argv[2] ?? "/tmp/la14-megasuper-busqueda.html";
+const file = process.argv[2] ?? "fixtures/la14-megasuper-busqueda.html";
 const html = readFileSync(file, "utf8");
 const { items, diagnostics } = parseMegaSuperSearch(html);
 

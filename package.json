@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test:competencia": "tsx scripts/test-competencia.ts && tsx scripts/test-megasuper-flight.ts && tsx scripts/test-integracion-competencia.ts && tsx scripts/test-historial-competencia.ts && tsx scripts/test-persistencia-sql.ts",
+    "test:cotizador": "tsx scripts/test-cotizador-sql.ts && tsx scripts/test-cotizador-lib.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -17,6 +20,7 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.15",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

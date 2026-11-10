@@ -1,4 +1,4 @@
-// [LA14 · BASE · v3] app/admin/layout.tsx
+// [LA14 · COTIZADOR · v1] app/admin/layout.tsx (antes BASE v3; añade print:hidden)
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -32,8 +32,8 @@ export default async function AdminLayout({
   if (!isAdmin) redirect("/login?error=1");
 
   return (
-    <div className="mx-auto max-w-5xl px-6 pb-16 pt-10">
-      <header className="flex items-center justify-between">
+    <div className="mx-auto max-w-5xl px-6 pb-16 pt-10 print:max-w-none print:p-0">
+      <header className="flex items-center print:hidden justify-between">
         <div className="flex items-baseline gap-4">
           <span className="font-serif text-3xl">La 14 Lounge</span>
           <span className="font-mono text-xs uppercase tracking-[0.2em] text-ink-faint">
@@ -47,7 +47,7 @@ export default async function AdminLayout({
         </form>
       </header>
 
-      <nav className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-b border-rule pb-3 text-sm text-ink-muted">
+      <nav className="mt-5 print:hidden flex flex-wrap gap-x-6 gap-y-2 border-b border-rule pb-3 text-sm text-ink-muted">
         <Link href="/admin" className="hover:text-ink">Resumen</Link>
         <Link href="/admin/pedidos" className="hover:text-ink">Pedidos</Link>
         <Link href="/admin/clientes" className="hover:text-ink">Clientes</Link>

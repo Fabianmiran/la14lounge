@@ -1,4 +1,5 @@
-// [LA14 · VENTAS · v1] app/admin/pedidos/page.tsx
+// [LA14 · COTIZADOR · v1] app/admin/pedidos/page.tsx (antes VENTAS v1; añade enlace a Cotizaciones)
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { colones } from "@/lib/forms";
 import { changeStatus, createOrder, markPaid } from "./actions";
@@ -50,7 +51,12 @@ export default async function Pedidos({
 
   return (
     <>
-      <h1 className="font-serif text-3xl">Pedidos</h1>
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <h1 className="font-serif text-3xl">Pedidos</h1>
+        <Link href="/admin/pedidos/cotizaciones" className="rounded-full border border-ink-muted px-4 py-1.5 font-mono text-xs uppercase tracking-[0.2em] hover:bg-ink hover:text-background">
+          Cotizaciones →
+        </Link>
+      </div>
       {ok && <p className="mt-3 font-mono text-xs text-ink-muted">✓ Listo.</p>}
       {error && <p className="mt-3 font-mono text-xs text-alarm">{ERRORS[error] ?? "Ocurrió un error."}</p>}
 

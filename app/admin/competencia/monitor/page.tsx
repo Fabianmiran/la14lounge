@@ -1,4 +1,4 @@
-// [LA14 · COMPETENCIA · MONITOR · v1]
+// [LA14 · COMPETENCIA · MONITOR · v1.1]
 import { createClient } from "@/lib/supabase/server";
 
 export default async function MonitorCompetencia() {
@@ -20,7 +20,7 @@ export default async function MonitorCompetencia() {
       <div className="flex items-baseline justify-between gap-4">
         <div>
           <h1 className="font-serif text-3xl">Monitor de competencia</h1>
-          <p className="mt-1 text-sm text-ink-muted">Histórico de ejecuciones automáticas.</p>
+          <p className="mt-1 text-sm text-ink-muted">Histórico de ejecuciones del monitor.</p>
         </div>
         <a href="/admin/competencia" className="text-sm text-ink-muted hover:text-ink">← Buscar precios</a>
       </div>
@@ -54,17 +54,16 @@ export default async function MonitorCompetencia() {
             ))}
           </tbody>
         </table>
-        {(!runs || runs.length === 0) && <p className="border-y border-rule py-6 text-sm text-ink-muted">Aún no hay ejecuciones. El monitor se ejecuta semanalmente desde GitHub Actions.</p>}
+        {(!runs || runs.length === 0) && <p className="border-y border-rule py-6 text-sm text-ink-muted">Aún no hay ejecuciones: el monitor automático todavía no está activado. Las búsquedas manuales se guardan en el historial de cada producto.</p>}
       </section>
 
       <section className="mt-10 bg-surface p-6">
         <h2 className="font-serif text-2xl">Configuración</h2>
         <ul className="mt-3 space-y-1 text-sm text-ink-muted">
-          <li>• Frecuencia: lunes, 8:00 a. m. hora Costa Rica.</li>
-          <li>• También puede ejecutarse manualmente desde GitHub Actions.</li>
-          <li>• Reporte por correo mediante Resend.</li>
+          <li>• Estado: sin programación activa. Por ahora solo hay búsquedas manuales.</li>
+          <li>• Antes de activarlo hay que verificar el acceso permitido de cada tienda.</li>
           <li>• No realiza login, compras, checkout ni modificaciones en las tiendas.</li>
-        </ul>
+          </ul>
       </section>
 
       {errors && errors.length > 0 && (

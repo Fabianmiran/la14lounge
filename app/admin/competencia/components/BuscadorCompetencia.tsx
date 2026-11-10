@@ -119,7 +119,7 @@ export function BuscadorCompetencia() {
               )}
 
               <p className="mt-3 text-xs text-ink-faint">
-                {res.saved ? "✓ Búsqueda guardada en el historial." : res.saveNote ?? ""}
+                {res.saved ? `✓ Guardado en el historial${res.saveNote ? ` · ${res.saveNote}` : ""}` : res.saveNote ?? ""}
               </p>
 
               <details className="mt-3 text-sm">
