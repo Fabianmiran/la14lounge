@@ -1,4 +1,4 @@
-// [LA14 · SEGURIDAD · v1] app/login/page.tsx
+// [LA14 · ACCESO · v1] app/login/page.tsx (antes SEGURIDAD v1; añade avisos de contraseña nueva)
 import type { Metadata } from "next";
 import { login } from "./actions";
 
@@ -10,9 +10,9 @@ export const metadata: Metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; ok?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, ok } = await searchParams;
 
   return (
     <main className="flex min-h-screen items-center justify-center px-6">
@@ -25,7 +25,16 @@ export default async function LoginPage({
           Acceso privado
         </p>
 
-        {error === "bloqueado" ? (
+        {ok === "clave" && (
+          <p className="text-center font-mono text-xs text-ink-muted">
+            ✓ Contraseña actualizada. Ya puedes entrar.
+          </p>
+        )}
+        {error === "enlace" ? (
+          <p className="text-center font-mono text-xs text-alarm">
+            El enlace venció o ya se usó. Pide uno nuevo.
+          </p>
+        ) : error === "bloqueado" ? (
           <p className="text-center font-mono text-xs text-alarm">
             Demasiados intentos. Espera 15 minutos e intenta de nuevo.
           </p>
