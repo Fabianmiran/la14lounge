@@ -1,4 +1,4 @@
-// [LA14 · INVENTARIO · v1] app/admin/inventario/page.tsx
+// [LA14 · PEDIDOS · v1] app/admin/inventario/page.tsx (antes INVENTARIO v1; muestra físico, reservado y disponible)
 import { createClient } from "@/lib/supabase/server";
 import { registerStock, setMinStock } from "./actions";
 
@@ -19,7 +19,7 @@ export default async function Inventario({
 
   const [prod, stk, mov] = await Promise.all([
     supabase.from("products").select("id, name, size_ml, min_stock").order("name"),
-    supabase.from("v_stock").select("product_id, stock"),
+    supabase.from("v_stock_status").select("product_id, on_hand, reserved, available"),
     supabase
       .from("stock_movements")
       .select("qty, reason, note, created_at, products(name)")
@@ -28,7 +28,9 @@ export default async function Inventario({
   ]);
 
   const products = (prod.data ?? []) as P[];
-  const stock = new Map(((stk.data ?? []) as { product_id: number; stock: number }[]).map((s) => [s.product_id, s.stock]));
+  const stock = new Map(
+    ((stk.data ?? []) as { product_id: number; on_hand: number; reserved: number; available: number }[]).map((s) => [s.product_id, s]),
+  );
   const moves = (mov.data ?? []) as unknown as M[];
 
   return (
@@ -69,12 +71,13 @@ export default async function Inventario({
 
       <h2 className="mt-8 font-serif text-2xl">Existencias</h2>
       <p className="mt-1 text-xs text-ink-faint">
-        Al marcar un pedido como Entregado, las unidades se restan solas. El stock mínimo activa la alerta.
+        El número grande es lo DISPONIBLE (físico menos lo reservado por pedidos abiertos). Al entregar, lo físico baja solo; al cancelar, la reserva se libera. El stock mínimo activa la alerta.
       </p>
       <ul className="mt-3 divide-y divide-rule border-y border-rule">
         {products.length === 0 && <li className="py-4 text-ink-muted">Aún no hay productos.</li>}
         {products.map((p) => {
-          const s = stock.get(p.id) ?? 0;
+          const st = stock.get(p.id) ?? { on_hand: 0, reserved: 0, available: 0 };
+          const s = st.available;
           const low = s <= 0 || (p.min_stock > 0 && s <= p.min_stock);
           return (
             <li key={p.id} className="grid grid-cols-[1fr_auto] items-center gap-4 py-3">
@@ -89,6 +92,7 @@ export default async function Inventario({
               </div>
               <p className={`text-right font-mono text-3xl ${low ? "text-alarm" : ""}`}>
                 {s}
+                <span className="block text-[10px] font-sans normal-case tracking-normal text-ink-faint">físico {st.on_hand} · reservado {st.reserved}</span>
                 {low && <span className="block text-[10px] uppercase tracking-[0.18em]">{s <= 0 ? "Agotado" : "Stock bajo"}</span>}
               </p>
             </li>

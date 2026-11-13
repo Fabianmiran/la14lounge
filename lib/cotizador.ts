@@ -1,9 +1,9 @@
-// [LA14 · COTIZADOR · v1] lib/cotizador.ts
+// [LA14 · PEDIDOS · v1] lib/cotizador.ts (antes COTIZADOR v1; añade estado cancelada)
 // Utilidades del cotizador. Nada de aquí lee costos: es seguro para la vista del cliente.
 import { colones } from "@/lib/forms";
 
 export const QUOTE_STATUS: Record<string, string> = {
-  borrador: "Borrador", enviada: "Enviada", aceptada: "Aceptada", rechazada: "Rechazada",
+  borrador: "Borrador", enviada: "Enviada", aceptada: "Aceptada", rechazada: "Rechazada", cancelada: "Cancelada",
 };
 
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

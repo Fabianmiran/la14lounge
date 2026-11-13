@@ -1,4 +1,4 @@
-// [LA14 · COTIZADOR · v1] app/admin/pedidos/cotizaciones/actions.ts
+// [LA14 · PEDIDOS · v1] app/admin/pedidos/cotizaciones/actions.ts (antes COTIZADOR v1; añade borrar y stock)
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -7,7 +7,9 @@ import { requireAdmin } from "@/lib/admin";
 import { int, txt } from "@/lib/forms";
 import { UUID_RE, parseDiscount } from "@/lib/cotizador";
 
-const BASE = "/admin/pedidos/cotizaciones";
+const BASE = "/admin/pedidos";
+const DETAIL = "/admin/pedidos/cotizaciones";
+const NEW = `${BASE}?nuevo=cotizar`;
 const PAYMENTS = ["sinpe", "efectivo", "tarjeta"];
 const LINES = 10;
 
@@ -20,15 +22,15 @@ export async function createQuote(formData: FormData) {
     const qty = int(formData, `qty_${i}`);
     if (!product_id && !qty) continue;
     const discount = parseDiscount(formData.get(`discount_${i}`));
-    if (!product_id || !qty || qty < 1 || qty > 999 || discount === null) redirect(`${BASE}?error=linea`);
+    if (!product_id || !qty || qty < 1 || qty > 999 || discount === null) redirect(`${NEW}&error=linea`);
     items.push({ product_id, qty, discount_pct: discount });
   }
-  if (items.length === 0) redirect(`${BASE}?error=vacio`);
+  if (items.length === 0) redirect(`${NEW}&error=vacio`);
 
   const days = int(formData, "valid_days") ?? 7;
   const margin = Number(String(formData.get("min_margin") ?? "10").replace(",", "."));
-  if (days < 1 || days > 60) redirect(`${BASE}?error=vigencia`);
-  if (!Number.isFinite(margin) || margin < 0 || margin > 90) redirect(`${BASE}?error=margen`);
+  if (days < 1 || days > 60) redirect(`${NEW}&error=vigencia`);
+  if (!Number.isFinite(margin) || margin < 0 || margin > 90) redirect(`${NEW}&error=margen`);
 
   const { data, error } = await supabase.rpc("create_quote", {
     p_customer: int(formData, "customer_id"),
@@ -39,10 +41,10 @@ export async function createQuote(formData: FormData) {
     p_items: items,
     p_min_margin: margin,
   });
-  if (error || typeof data !== "string" || !UUID_RE.test(data)) redirect(`${BASE}?error=guardar`);
+  if (error || typeof data !== "string" || !UUID_RE.test(data)) redirect(`${NEW}&error=guardar`);
 
   revalidatePath(BASE);
-  redirect(`${BASE}/${data}`);
+  redirect(`${DETAIL}/${data}`);
 }
 
 export async function setQuoteStatus(formData: FormData) {
@@ -52,10 +54,10 @@ export async function setQuoteStatus(formData: FormData) {
   if (!UUID_RE.test(id) || (status !== "enviada" && status !== "rechazada")) redirect(`${BASE}?error=guardar`);
 
   const { error } = await supabase.rpc("set_quote_status", { p_quote: id, p_status: status });
-  if (error) redirect(`${BASE}/${id}?error=cerrada`);
+  if (error) redirect(`${DETAIL}/${id}?error=cerrada`);
 
   revalidatePath(BASE);
-  redirect(`${BASE}/${id}?ok=1`);
+  redirect(`${DETAIL}/${id}?ok=1`);
 }
 
 export async function acceptQuote(formData: FormData) {
@@ -68,9 +70,26 @@ export async function acceptQuote(formData: FormData) {
     p_quote: id,
     p_payment: pay && PAYMENTS.includes(pay) ? pay : null,
   });
-  if (error) redirect(`${BASE}/${id}?error=${/vencida/.test(error.message) ? "vencida" : "cerrada"}`);
+  if (error) {
+    if (error.message.startsWith("sin stock"))
+      redirect(`${DETAIL}/${id}?error=stock&detalle=${encodeURIComponent(error.message.slice(0, 140))}`);
+    redirect(`${DETAIL}/${id}?error=${/vencida/.test(error.message) ? "vencida" : "cerrada"}`);
+  }
 
   revalidatePath(BASE);
-  revalidatePath("/admin/pedidos");
-  redirect("/admin/pedidos?ok=1");
+  revalidatePath("/admin/inventario");
+  redirect(`${BASE}?v=porentregar&ok=1`);
+}
+
+// Borra una cotización que NO se aceptó. No toca el inventario. Queda registro en la bitácora.
+export async function deleteQuote(formData: FormData) {
+  const supabase = await requireAdmin();
+  const id = String(formData.get("quote_id") ?? "");
+  if (!UUID_RE.test(id)) redirect(`${BASE}?error=guardar`);
+
+  const { error } = await supabase.rpc("delete_quote", { p_quote: id });
+  if (error) redirect(`${DETAIL}/${id}?error=nobor`);
+
+  revalidatePath(BASE);
+  redirect(`${BASE}?v=cotizaciones&ok=1`);
 }

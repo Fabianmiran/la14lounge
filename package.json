@@ -9,7 +9,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test:competencia": "tsx scripts/test-competencia.ts && tsx scripts/test-megasuper-flight.ts && tsx scripts/test-integracion-competencia.ts && tsx scripts/test-historial-competencia.ts && tsx scripts/test-persistencia-sql.ts",
-    "test:cotizador": "tsx scripts/test-cotizador-sql.ts && tsx scripts/test-cotizador-lib.ts"
+    "test:cotizador": "tsx scripts/test-cotizador-sql.ts && tsx scripts/test-cotizador-lib.ts",
+    "test:pedidos": "tsx scripts/test-pedidos-sql.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

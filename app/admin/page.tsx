@@ -1,4 +1,4 @@
-// [LA14 · DASHBOARD · v1] app/admin/page.tsx (reemplaza al de BASE v1)
+// [LA14 · PEDIDOS · v1] (antes DASHBOARD v1: usa stock disponible)  app/admin/page.tsx (reemplaza al de BASE v1)
 import { createClient } from "@/lib/supabase/server";
 import { colones } from "@/lib/forms";
 
@@ -43,14 +43,15 @@ export default async function Dashboard() {
   const [prod, ov, stk, ord, sold] = await Promise.all([
     supabase.from("products").select("id, name, size_ml, sale_price, min_stock").eq("active", true),
     supabase.from("v_pricing_overview").select("id, margin_pct"),
-    supabase.from("v_stock").select("product_id, stock"),
+    supabase.from("v_stock_status").select("product_id, available"),
     supabase.from("orders").select("status, total_crc, paid, created_at, delivered_at").order("created_at", { ascending: false }).limit(2000),
     supabase.from("order_items").select("product_id, qty, orders!inner(status)").eq("orders.status", "entregado").limit(5000),
   ]);
 
   const products = (prod.data ?? []) as Prod[];
   const margin = new Map(((ov.data ?? []) as Ov[]).map((o) => [o.id, o.margin_pct]));
-  const stock = new Map(((stk.data ?? []) as { product_id: number; stock: number }[]).map((s) => [s.product_id, s.stock]));
+  // Disponible = físico menos lo reservado por pedidos abiertos.
+  const stock = new Map(((stk.data ?? []) as { product_id: number; available: number }[]).map((s) => [s.product_id, s.available]));
   const orders = (ord.data ?? []) as Ord[];
   const units = new Map<number, number>();
   for (const s of (sold.data ?? []) as unknown as Sold[]) units.set(s.product_id, (units.get(s.product_id) ?? 0) + s.qty);
@@ -143,7 +144,7 @@ export default async function Dashboard() {
                 <th className="py-2 font-normal">Producto</th>
                 <th className="text-right font-normal">Precio</th>
                 <th className="text-right font-normal">Margen</th>
-                <th className="text-right font-normal">Stock</th>
+                <th className="text-right font-normal">Disponible</th>
                 <th className="text-right font-normal">Vendidas</th>
                 <th className="pl-6 font-normal">Motivo</th>
               </tr>
