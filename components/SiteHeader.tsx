@@ -1,13 +1,14 @@
 
 "use client";
 
-// [LA14 · ENTREGAS · v2] components/SiteHeader.tsx
+// [LA14 · TEMA · v1] components/SiteHeader.tsx (antes ENTREGAS v2; añade botón de tema)
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
 import { useCart } from "./CartProvider";
+import { ThemeToggle } from "./ThemeToggle";
 
 const colones = (n: number) => "₡" + n.toLocaleString("es-CR");
 
@@ -122,19 +123,22 @@ export function SiteHeader() {
             La 14 Lounge
           </Link>
 
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="font-mono text-xs uppercase tracking-[0.18em]"
-            aria-label={`Abrir carrito, ${count} productos`}
-            aria-haspopup="dialog"
-            aria-expanded={open}
-          >
-            Carrito
-            {count > 0 && (
-              <span className="ml-2 text-alarm">{count}</span>
-            )}
-          </button>
+          <div className="flex items-center gap-5">
+            <ThemeToggle />
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className="font-mono text-xs uppercase tracking-[0.18em]"
+              aria-label={`Abrir carrito, ${count} productos`}
+              aria-haspopup="dialog"
+              aria-expanded={open}
+            >
+              Carrito
+              {count > 0 && (
+                <span className="ml-2 text-alarm">{count}</span>
+              )}
+            </button>
+          </div>
         </div>
       </header>
 

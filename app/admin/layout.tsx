@@ -1,9 +1,10 @@
-// [LA14 · PRODUCTOS · v1] app/admin/layout.tsx (antes COTIZADOR v1; añade enlace a Productos)
+// [LA14 · TEMA · v1] app/admin/layout.tsx (antes PRODUCTOS v1; añade botón de tema)
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "../login/actions";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const metadata: Metadata = {
   title: "Panel",
@@ -40,11 +41,14 @@ export default async function AdminLayout({
             Panel
           </span>
         </div>
-        <form action={logout}>
-          <button className="rounded-full border border-ink-muted px-4 py-1.5 font-mono text-xs uppercase tracking-[0.2em] hover:bg-surface">
-            Salir
-          </button>
-        </form>
+        <div className="flex items-center gap-5">
+          <ThemeToggle />
+          <form action={logout}>
+            <button className="rounded-full border border-ink-muted px-4 py-1.5 font-mono text-xs uppercase tracking-[0.2em] hover:bg-surface">
+              Salir
+            </button>
+          </form>
+        </div>
       </header>
 
       <nav className="mt-5 print:hidden flex flex-wrap gap-x-6 gap-y-2 border-b border-rule pb-3 text-sm text-ink-muted">

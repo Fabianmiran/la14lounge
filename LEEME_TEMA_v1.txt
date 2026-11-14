@@ -1,0 +1,2 @@
+LA14 · TEMA · v1
+Boton Claro/Oscuro en la tienda y el panel. Sin SQL. Por defecto sigue oscuro.

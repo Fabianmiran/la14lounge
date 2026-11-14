@@ -33,6 +33,26 @@
   --cta-foreground: oklch(0.16 0.012 62);
 }
 
+/* Tema claro ("Claro urbano"): se activa con el botón Claro/Oscuro.
+   Crema cálido, texto carbón, acento naranja brasa. Sin botón = oscuro. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --background: #f6f1e9;
+  --surface: #ffffff;
+  --ink: #1c1b19;
+  --ink-muted: #5e5a53;
+  --ink-faint: #6f6a61;
+  --rule: rgb(28 27 25 / 14%);
+  --alarm: #b3261e;
+  --cta: #c4421a;
+  --cta-foreground: #ffffff;
+}
+
+/* Texto del botón de tema: muestra a qué tema vas a cambiar */
+.tema-a-oscuro { display: none; }
+:root[data-theme="light"] .tema-a-claro { display: none; }
+:root[data-theme="light"] .tema-a-oscuro { display: inline; }
+
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;

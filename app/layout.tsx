@@ -1,3 +1,4 @@
+// [LA14 · TEMA · v1] app/layout.tsx (antes sin tema claro)
 import type { Metadata } from "next";
 import { Newsreader, Work_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
@@ -32,8 +33,18 @@ export default function RootLayout({
   return (
     <html
       lang="es"
+      suppressHydrationWarning
       className={`${serif.variable} ${sans.variable} ${mono.variable}`}
     >
+      <head>
+        {/* Aplica el tema guardado antes de pintar la página (evita el parpadeo) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var t=localStorage.getItem('la14-tema');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}",
+          }}
+        />
+      </head>
       <body><CartProvider>{children}</CartProvider></body>
     </html>
   );
