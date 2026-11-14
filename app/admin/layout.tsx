@@ -1,4 +1,4 @@
-// [LA14 · COTIZADOR · v1] app/admin/layout.tsx (antes BASE v3; añade print:hidden)
+// [LA14 · PRODUCTOS · v1] app/admin/layout.tsx (antes COTIZADOR v1; añade enlace a Productos)
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -51,6 +51,7 @@ export default async function AdminLayout({
         <Link href="/admin" className="hover:text-ink">Resumen</Link>
         <Link href="/admin/pedidos" className="hover:text-ink">Pedidos</Link>
         <Link href="/admin/clientes" className="hover:text-ink">Clientes</Link>
+        <Link href="/admin/productos" className="hover:text-ink">Productos</Link>
         <Link href="/admin/inventario" className="hover:text-ink">Inventario</Link>
         <Link href="/admin/proveedores" className="hover:text-ink">Proveedores</Link>
         <Link href="/admin/entregas" className="hover:text-ink">Entregas</Link>

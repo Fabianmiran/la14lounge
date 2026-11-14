@@ -1,0 +1,3 @@
+LA14 · PRODUCTOS · v1
+Nueva pantalla /admin/productos: precio, activar, stock minimo, cargar stock, crear producto y categoria.
+No requiere SQL (las politicas "admin total" ya existen).
