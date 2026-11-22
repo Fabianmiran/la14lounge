@@ -1,7 +1,7 @@
 
 "use client";
 
-// [LA14 · TEMA · v1] components/SiteHeader.tsx (antes ENTREGAS v2; añade botón de tema)
+// [LA14 · NOMBRE · v1] components/SiteHeader.tsx (antes ENTREGAS v2; añade botón de tema)
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -90,7 +90,7 @@ export function SiteHeader() {
     address.trim().length >= 5;
 
   const orderText = [
-    "Hola, quiero hacer este pedido en La 14 Lounge:",
+    "Hola, quiero hacer este pedido en La 214 Street:",
     ...items.map(
       (i) =>
         `• ${i.qty} x ${i.name} (${colones(i.price * i.qty)})`
@@ -120,7 +120,7 @@ export function SiteHeader() {
             href="/"
             className="absolute left-1/2 -translate-x-1/2 font-serif text-2xl"
           >
-            La 14 Lounge
+            La 214 Street
           </Link>
 
           <div className="flex items-center gap-5">

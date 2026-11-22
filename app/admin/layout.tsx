@@ -1,4 +1,4 @@
-// [LA14 · TEMA · v1] app/admin/layout.tsx (antes PRODUCTOS v1; añade botón de tema)
+// [LA14 · NOMBRE · v1] app/admin/layout.tsx (antes PRODUCTOS v1; añade botón de tema)
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -36,7 +36,7 @@ export default async function AdminLayout({
     <div className="mx-auto max-w-5xl px-6 pb-16 pt-10 print:max-w-none print:p-0">
       <header className="flex items-center print:hidden justify-between">
         <div className="flex items-baseline gap-4">
-          <span className="font-serif text-3xl">La 14 Lounge</span>
+          <span className="font-serif text-3xl">La 214 Street</span>
           <span className="font-mono text-xs uppercase tracking-[0.2em] text-ink-faint">
             Panel
           </span>

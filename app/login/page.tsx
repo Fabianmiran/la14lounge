@@ -1,4 +1,4 @@
-// [LA14 · ACCESO · v1] app/login/page.tsx (antes SEGURIDAD v1; añade avisos de contraseña nueva)
+// [LA14 · NOMBRE · v1] app/login/page.tsx (antes SEGURIDAD v1; añade avisos de contraseña nueva)
 import type { Metadata } from "next";
 import { login } from "./actions";
 
@@ -20,7 +20,7 @@ export default async function LoginPage({
         action={login}
         className="page-rise w-full max-w-sm space-y-4 border-y-2 border-ink-muted bg-surface p-8"
       >
-        <h1 className="text-center font-serif text-3xl">La 14 Lounge</h1>
+        <h1 className="text-center font-serif text-3xl">La 214 Street</h1>
         <p className="text-center text-[10px] uppercase tracking-[0.18em] text-ink-faint">
           Acceso privado
         </p>

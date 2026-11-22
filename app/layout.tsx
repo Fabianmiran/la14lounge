@@ -1,4 +1,4 @@
-// [LA14 · TEMA · v1] app/layout.tsx (antes sin tema claro)
+// [LA14 · NOMBRE · v1] app/layout.tsx (antes sin tema claro)
 import type { Metadata } from "next";
 import { Newsreader, Work_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
@@ -20,7 +20,7 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "La 14 Lounge", template: "%s · La 14 Lounge" },
+  title: { default: "La 214 Street", template: "%s · La 214 Street" },
   description:
     "Licores con entrega en el Gran Área Metropolitana de Costa Rica. Venta exclusiva a mayores de 18 años.",
 };

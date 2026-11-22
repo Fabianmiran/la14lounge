@@ -1,4 +1,4 @@
-// [LA14 · PEDIDOS · v1] lib/cotizador.ts (antes COTIZADOR v1; añade estado cancelada)
+// [LA14 · NOMBRE · v1] lib/cotizador.ts (antes COTIZADOR v1; añade estado cancelada)
 // Utilidades del cotizador. Nada de aquí lee costos: es seguro para la vista del cliente.
 import { colones } from "@/lib/forms";
 
@@ -34,7 +34,7 @@ export type ClientQuote = {
 
 export function whatsappText(q: ClientQuote, lines: ClientLine[]) {
   const out = [
-    `*La 14 Lounge* — Cotización ${q.quote_number}`,
+    `*La 214 Street* — Cotización ${q.quote_number}`,
     q.customer_name ? `Para: ${q.customer_name}` : "",
     "",
     ...lines.map((l) => `• ${l.qty} × ${l.name}${l.size_ml ? ` (${l.size_ml} ml)` : ""} — ${colones(l.unit_price_crc * l.qty)}`),

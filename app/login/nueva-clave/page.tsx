@@ -1,4 +1,4 @@
-// [LA14 · ACCESO · v1] app/login/nueva-clave/page.tsx
+// [LA14 · NOMBRE · v1] app/login/nueva-clave/page.tsx
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -25,7 +25,7 @@ export default async function NuevaClave({ searchParams }: { searchParams: Promi
     <main className="flex min-h-screen items-center justify-center px-6">
       <form action={cambiarClave} className="page-rise w-full max-w-sm space-y-4 border-y-2 border-ink-muted bg-surface p-8">
         <h1 className="text-center font-serif text-3xl">Nueva contraseña</h1>
-        <p className="text-center text-[10px] uppercase tracking-[0.18em] text-ink-faint">La 14 Lounge · acceso privado</p>
+        <p className="text-center text-[10px] uppercase tracking-[0.18em] text-ink-faint">La 214 Street · acceso privado</p>
         {error && <p className="text-center font-mono text-xs text-alarm">{MSG[error] ?? "Revisa los datos."}</p>}
         <input name="clave" type="password" required minLength={12} maxLength={72} autoComplete="new-password" placeholder="Nueva contraseña (mín. 12)" className={input} />
         <input name="clave2" type="password" required minLength={12} maxLength={72} autoComplete="new-password" placeholder="Repítela" className={input} />

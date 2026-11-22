@@ -1,4 +1,4 @@
-// [LA14 · COTIZADOR · v1] app/admin/pedidos/cotizaciones/[id]/cliente/page.tsx
+// [LA14 · NOMBRE · v1] app/admin/pedidos/cotizaciones/[id]/cliente/page.tsx
 // Vista para el CLIENTE: sin costos, sin márgenes, sin proveedores.
 // Por eso aquí se piden solo las columnas necesarias (nunca unit_cost_crc).
 import Link from "next/link";
@@ -54,7 +54,7 @@ export default async function VistaCliente({ params }: { params: Promise<{ id: s
       <article className="mx-auto mt-6 max-w-2xl p-8 print:mt-0 print:p-0" style={{ background: CREAM, color: INK }}>
         <header className="flex items-end justify-between border-b-2 pb-4" style={{ borderColor: GOLD }}>
           <div>
-            <p className="font-serif text-4xl" style={{ color: OLIVE }}>La 14 Lounge</p>
+            <p className="font-serif text-4xl" style={{ color: OLIVE }}>La 214 Street</p>
             <p className="text-xs uppercase tracking-[0.2em]" style={{ color: GOLD }}>Licores · entrega en el GAM</p>
           </div>
           <div className="text-right">

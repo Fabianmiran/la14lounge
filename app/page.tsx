@@ -42,7 +42,7 @@ export default async function Home() {
     <>
       <SiteHeader />
       <main>
-        <h1 className="sr-only">La 14 Lounge: licores con entrega en el GAM</h1>
+        <h1 className="sr-only">La 214 Street: licores con entrega en el GAM</h1>
         <Marquee text="Selección curada" />
         <Marquee text="Entrega en el GAM" reverse />
         <Marquee text="Pedí por WhatsApp" />
@@ -65,7 +65,7 @@ export default async function Home() {
         </section>
       </main>
       <footer className="border-t border-rule px-6 py-10 text-center text-xs text-ink-faint">
-        <p className="font-serif text-lg text-ink">La 14 Lounge</p>
+        <p className="font-serif text-lg text-ink">La 214 Street</p>
         <p className="mt-2">Venta exclusiva a mayores de 18 años. Disfruta con moderación.</p>
       </footer>
     </>
